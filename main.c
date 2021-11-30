@@ -1,15 +1,23 @@
+#include <immintrin.h>
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "bad_atomic.h"
 #include "ctx.h"
 #include "nproc.h"
 
-#define ARRAY_SIZE(x)   (sizeof(x) / sizeof(*(x)))
-#define force_inline    static inline __attribute__((always_inline))
+//#define ARRAY_SIZE(x)   (sizeof(x) / sizeof(*(x)))
+
+#define ROUNDS          (1U << 24U)
+//#define cpu_relax()     _mm_pause()
+
+#ifndef cpu_relax
+#define cpu_relax()     do{}while(0)
+#endif
 
 static void *f(void *arg);
 
@@ -31,7 +39,6 @@ int main(void)
 	for (i = 0; i < ctx->num; ++i) {
 		void *ret = NULL;
 		pthread_join(ctx->thd[i], &ret);
-		printf("%2u\t%08" PRIx32 "\n", i, (uint32_t)(uintptr_t)ret);
 	}
 
 	printf("%016" PRIx64 "\n", atomic_load(bad_atomic_u64(&ctx->ctr)));
@@ -40,14 +47,44 @@ int main(void)
 	return EXIT_SUCCESS;
 }
 
+static void *loop_32(atomic_u32_t *v)
+{
+	for (unsigned int i = 0U; i < ROUNDS - 1U; ++i) {
+		atomic_fetch_add_explicit(&v[0], 1U, memory_order_release);
+		atomic_fetch_add_explicit(&v[1], 1U, memory_order_release);
+		cpu_relax();
+	}
+
+	return NULL;
+}
+
+static void *loop_64(atomic_u64_t *v)
+{
+	for (unsigned int i = 0U; i < ROUNDS - 1U; ++i) {
+		atomic_fetch_add_explicit(v, UINT64_C(0x100000001),
+		                          memory_order_release);
+		cpu_relax();
+	}
+
+	return NULL;
+}
+
 static void *f(void *arg)
 {
 	struct ctx *ctx = (struct ctx *)arg;
-	uint64_t i = atomic_fetch_add_explicit(bad_atomic_u64(&ctx->ctr), 1U,
-	                                       memory_order_release);
-	uint32_t u32 = atomic_fetch_or_explicit(&bad_atomic_u32(&ctx->ctr)[1],
-	                                        UINT32_C(1) << i,
-	                                        memory_order_release);
-	u32 |= UINT32_C(1) << i;
-	return (void *)(uintptr_t)u32;
+	bool odd = (atomic_fetch_add_explicit(&bad_atomic_u32(&ctx->ctr)[0],
+	                                      1U, memory_order_release) & 1U);
+	atomic_fetch_add_explicit(&bad_atomic_u32(&ctx->ctr)[1],
+	                          1U, memory_order_release);
+
+	if (!ctx_wait(ctx))
+		pthread_exit(NULL);
+
+	if (odd) {
+		loop_64(bad_atomic_u64(&ctx->ctr));
+	} else {
+		loop_32(bad_atomic_u32(&ctx->ctr));
+	}
+
+	return NULL;
 }

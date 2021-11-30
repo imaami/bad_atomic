@@ -4,6 +4,8 @@
 #include <stdatomic.h>
 #include <stdint.h>
 
+#define force_inline    static inline __attribute__((always_inline))
+
 #define bad_atomic_u64(ptr)     (&(ptr)->u64)
 #define bad_atomic_u32(ptr)     (&(ptr)->u32[0])
 

@@ -6,7 +6,7 @@ LD    := $(CC)
 STRIP := strip
 RM    := rm
 
-BASEFLGS := -O3 -march=native -mtune=native -flto=32 -fuse-linker-plugin
+BASEFLGS := -Og -ggdb -march=native -mtune=native -flto=32 -fuse-linker-plugin
 
 DEBUG :=
 ifneq (1,$(strip $(DEBUG)))
@@ -31,7 +31,9 @@ all: $(PROG)
 
 $(PROG): $(patsubst %,%.o,$(SRC))
 	$(Q)$(CC) $(BASEFLGS) -o $@ $^ $(LFLAGS)
+ifneq (1,$(strip $(DEBUG)))
 	$(Q)$(STRIP) $@
+endif
 
 %.c.o : %.c
 	$(Q)$(CC) $(CFLAGS) -c -o $@ $^

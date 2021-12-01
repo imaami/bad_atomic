@@ -10,8 +10,6 @@
 #include "ctx.h"
 #include "nproc.h"
 
-//#define ARRAY_SIZE(x)   (sizeof(x) / sizeof(*(x)))
-
 #define ROUNDS          (1U << 24U)
 //#define cpu_relax()     _mm_pause()
 

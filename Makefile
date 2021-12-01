@@ -1,16 +1,18 @@
 override PROG := bad_atomic
 
-CC    := gcc-11
-CXX   := g++-11
+CC    := gcc
+CXX   := g++
 LD    := $(CC)
 STRIP := strip
 RM    := rm
 
-BASEFLGS := -Og -ggdb -march=native -mtune=native -flto=32 -fuse-linker-plugin
+BASEFLGS := -march=native -mtune=native -flto -fuse-linker-plugin
 
-DEBUG :=
-ifneq (1,$(strip $(DEBUG)))
-override BASEFLGS += -DNDEBUG
+NDEBUG :=
+ifeq (1,$(strip $(NDEBUG)))
+override BASEFLGS += -O3 -DNDEBUG
+else
+override BASEFLGS += -Og -ggdb
 endif
 
 LFLAGS   := -pthread
@@ -31,7 +33,7 @@ all: $(PROG)
 
 $(PROG): $(patsubst %,%.o,$(SRC))
 	$(Q)$(CC) $(BASEFLGS) -o $@ $^ $(LFLAGS)
-ifneq (1,$(strip $(DEBUG)))
+ifeq (1,$(strip $(NDEBUG)))
 	$(Q)$(STRIP) $@
 endif
 

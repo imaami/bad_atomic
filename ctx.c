@@ -15,7 +15,7 @@ struct ctx *ctx_create(size_t nthreads)
 	if (nthreads < 1U || nthreads > 32U)
 		return NULL;
 
-	struct ctx *ctx = calloc(sizeof_ctx(nthreads), 1U);
+	struct ctx *ctx = calloc(1U, sizeof_ctx(nthreads));
 	if (!ctx)
 		return NULL;
 

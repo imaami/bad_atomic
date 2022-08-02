@@ -2,11 +2,13 @@
 
 #include <stdlib.h>
 
+#define sizeof_member(T, m) sizeof(((T *)0)->m)
+
 __attribute__((pure))
 force_inline size_t sizeof_ctx(size_t nthreads)
 {
-	return (7U + offsetof(struct ctx, thd)
-	        + nthreads * sizeof(*((struct ctx *)(char *)NULL)->thd))
+	return (7U + offsetof(struct ctx, thd) +
+	        nthreads * sizeof_member(struct ctx, thd[0]))
 	       & (SIZE_MAX ^ 7U);
 }
 

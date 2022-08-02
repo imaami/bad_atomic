@@ -1,4 +1,3 @@
-#include <immintrin.h>
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -6,16 +5,18 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#if defined(__i386__) || defined(__x86_64__)
+# include <emmintrin.h>
+# define cpu_relax() _mm_pause()
+#else
+# define cpu_relax() do{}while(0)
+#endif
+
 #include "bad_atomic.h"
 #include "ctx.h"
 #include "nproc.h"
 
 #define ROUNDS          (1U << 24U)
-//#define cpu_relax()     _mm_pause()
-
-#ifndef cpu_relax
-#define cpu_relax()     do{}while(0)
-#endif
 
 static void *f(void *arg);
 

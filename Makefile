@@ -4,9 +4,8 @@ CC    := gcc
 CXX   := g++
 LD    := $(CC)
 STRIP := strip
-RM    := rm
 
-BASEFLGS := -march=native -mtune=native -flto -fuse-linker-plugin
+BASEFLGS := -mtune=native -flto
 
 NDEBUG :=
 ifeq (1,$(strip $(NDEBUG)))
@@ -44,4 +43,4 @@ endif
 	$(Q)$(CXX) $(CXXFLAGS) -c -o $@ $^
 
 clean:
-	$(Q)$(RM) -f $(PROG) $(SRC:%=%.o)
+	$(Q)$(RM) $(PROG) $(SRC:%=%.o)
